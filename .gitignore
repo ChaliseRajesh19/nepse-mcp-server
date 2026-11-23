@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.py[cod]
+.env
+.pytest_cache/
+jwt_private.pem
+jwt_public.pem
