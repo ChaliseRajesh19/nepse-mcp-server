@@ -1,6 +1,4 @@
 import asyncio
-import os
-
 
 from dotenv import load_dotenv
 from mcp import ClientSession
@@ -41,19 +39,14 @@ def create_access_token():
     )
 
 
-AUTH_TOKEN = os.getenv("MCP_AUTH_TOKEN")
-
-
 async def main():
-    if not AUTH_TOKEN:
-        raise RuntimeError("MCP_AUTH_TOKEN is missing from .env")
     access_token = create_access_token()
     async with (
         httpx2.AsyncClient(
             headers={"Authorization": f"Bearer {access_token}"}
         ) as http_client,
         streamable_http_client(
-            "http://127.0.0.1:8000/mcp",
+            "https://nepse-mcp-server.onrender.com/mcp",
             http_client=http_client,
         ) as (read_stream, write_stream),
         ClientSession(read_stream, write_stream) as session,

@@ -1,11 +1,8 @@
 import asyncio
 import streamlit as st
 
-from mcp import ClientSession
-from mcp.client.stdio import stdio_client
-
 from client import (
-    server_params,
+    connect_to_mcp,
     discover_capabilities,
     prepare_tools_for_llm,
     chat_with_mcp,
@@ -32,27 +29,23 @@ st.caption("Your AI assistant for Nepal's stock market.")
 
 async def ask_nepse_assistant(user_query: str, on_tool_event=None) -> str:
 
-    async with stdio_client(server_params) as (read, write):
+    async with connect_to_mcp() as session:
 
-        async with ClientSession(read, write) as session:
+        capabilities = await discover_capabilities(session)
 
-            await session.initialize()
+        llm_tools = prepare_tools_for_llm(capabilities)
 
-            capabilities = await discover_capabilities(session)
+        response = await chat_with_mcp(
+            session,
+            llm_tools,
+            user_query,
+            on_tool_event=on_tool_event,
+        )
 
-            llm_tools = prepare_tools_for_llm(capabilities)
+        if response is None:
+            raise RuntimeError("The assistant could not generate a response.")
 
-            response = await chat_with_mcp(
-                session,
-                llm_tools,
-                user_query,
-                on_tool_event=on_tool_event,
-            )
-
-            if response is None:
-                raise RuntimeError("The assistant could not generate a response.")
-
-            return response
+        return response
 
 
 def get_assistant_response(user_query: str, on_tool_event=None) -> str:
@@ -142,7 +135,8 @@ if user_query:
                     if tool_status == "running":
 
                         with status.expander(
-                            f"🔧 {tool_name} — Running", expanded=True
+                            f"🔧 {tool_name} — Running",
+                            expanded=True,
                         ):
                             st.write("Input arguments:")
                             st.json(event.get("arguments", {}))
@@ -150,17 +144,24 @@ if user_query:
                     elif tool_status == "success":
 
                         with status.expander(
-                            f"✅ {tool_name} — Completed", expanded=False
+                            f"✅ {tool_name} — Completed",
+                            expanded=False,
                         ):
                             st.write("Returned data:")
                             st.code(
-                                event.get("result", "No result available"),
+                                event.get(
+                                    "result",
+                                    "No result available",
+                                ),
                                 language="text",
                             )
 
                     elif tool_status == "failed":
 
-                        with status.expander(f"❌ {tool_name} — Failed", expanded=True):
+                        with status.expander(
+                            f"❌ {tool_name} — Failed",
+                            expanded=True,
+                        ):
                             st.error(event.get("result", "Unknown error"))
 
                 assistant_response = get_assistant_response(
