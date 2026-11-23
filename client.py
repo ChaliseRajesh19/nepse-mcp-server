@@ -24,17 +24,29 @@ from mcp.client.streamable_http import streamable_http_client
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent
-
-groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-
 MODEL = "openai/gpt-oss-120b"
 MAX_TOOL_ROUNDS = 8
 
-# MCP connection configuration
 
-MCP_TRANSPORT = os.getenv("MCP_TRANSPORT", "stdio").lower()
+def get_setting(name, default=None):
+    value = os.getenv(name)
 
-MCP_SERVER_URL = os.getenv(
+    if value:
+        return value
+
+    try:
+        import streamlit as st
+
+        return st.secrets.get(name, default)
+    except Exception:
+        return default
+
+
+groq_client = Groq(api_key=get_setting("GROQ_API_KEY"))
+
+MCP_TRANSPORT = get_setting("MCP_TRANSPORT", "stdio").lower()
+
+MCP_SERVER_URL = get_setting(
     "MCP_SERVER_URL",
     "https://nepse-mcp-server.onrender.com/mcp",
 )
