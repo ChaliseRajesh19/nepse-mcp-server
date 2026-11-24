@@ -186,14 +186,15 @@ if user_query:
             )
 
         except Exception as exc:
+            st.exception(exc)
 
-            error_message = f"Something went wrong: {exc}"
+            # error_message = f"Something went wrong: {exc}"
 
-            st.error(error_message)
+            # st.error(error_message)
 
-            st.session_state.messages.append(
-                {
-                    "role": "assistant",
-                    "content": error_message,
-                }
-            )
+            # st.session_state.messages.append(
+            #     {
+            #         "role": "assistant",
+            #         "content": error_message,
+            #     }
+            # )
